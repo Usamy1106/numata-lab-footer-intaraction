@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>沼田研究室 フッターカスタマイザー</title>
+    
+    <style>
+        /* --- レイアウトの基本 --- */
+        body {
+            margin: 0; padding: 0;
+            background-color: #f0f2f5;
+            font-family: sans-serif;
+            height: 100vh; display: flex; flex-direction: column;
+            overflow: hidden; touch-action: none;
+        }
+
+        /* --- 配置エリア (常に5列) --- */
+        #workspace {
+            flex: 1; padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-auto-rows: 120px; /* 高さを固定して安定させる */
+            gap: 10px;
+            overflow-y: auto;
+            background-color: #ffffff;
+            align-content: start;
+        }
+
+        .slot {
+            border: 1px dashed #ccd0d5;
+            background-color: #f9fafb;
+            position: relative;
+        }
+        .slot.highlight {
+            background-color: #e7f3ff;
+            border-color: #1877f2;
+            border-style: solid;
+        }
+
+        /* --- 下部：ドック (3列) --- */
+        #dock-container {
+            height: 38vh;
+            background-color: #1c1e21;
+            padding: 15px;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        #dock {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        /* --- footer-box 調整 --- */
+        .footer-box {
+            background: #fff;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: grab;
+            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* ロゴが見えない問題を解消 */
+            display: block !important; 
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        /* 5列グリッド内では要素をフィットさせる */
+        .slot .footer-box {
+            position: absolute;
+            top: 0; left: 0;
+        }
+
+        /* ドラッグ中のクローン */
+        .footer-box.dragging-ghost {
+            position: fixed; z-index: 9999;
+            pointer-events: none; opacity: 0.8;
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        }
+
+        /* 内部の最小限のスタイル */
+        img { max-width: 100%; height: auto; pointer-events: none; display: block; }
+        .u-sp-only, .u-pc-tab { display: block !important; } /* カスタマイズ中は両方表示 */
+        h2 { font-size: 12px; margin: 0 0 5px; }
+        ul { list-style: none; padding: 0; margin: 0; font-size: 10px; }
+        a { text-decoration: none; color: inherit; pointer-events: none; }
+
+        /* ============================================================
+   two-box 対応 — style.css に追記してください
+   ============================================================ */
+
+/* 横2マス分に広がるスロット */
+.slot.slot--span2 {
+  grid-column: span 2;
+}
+
+/* dock 内の two-box は2列分 */
+#dock .footer-box.two-box {
+  grid-column: span 2;
+}
+    </style>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="workspace">
+    <script>
+        for(let i=0; i<30; i++) document.write('<div class="slot" data-index="'+i+'"></div>');
+    </script>
+</div>
+
+<div id="dock-container">
+    <div id="dock">
+        <div class="footer-box two-box">
+            <p class="l-footer__logo u-pc-tab">
+                <a href="index.html"><img src="images/logo.svg" alt="沼田真一研究室"></a>
+            </p>
+        </div>
+        <div class="footer-box">
+            <div class="l-footer__social-group">
+                <h2 class="l-footer__social-heading">沼田真一研究室</h2>
+                <ul class="l-footer__social-list">
+                    <li class="l-footer__social-item"><a href="#" target="_blank"><img src="images/icon-x.svg" alt="X"></a></li>
+                    <li class="l-footer__social-item"><a href="#" target="_blank"><img src="images/icon-instagram.svg" alt="Instagram"></a></li>
+                    <li class="l-footer__social-item"><a href="#" target="_blank"><img src="images/icon-facebook.svg" alt="Facebook"></a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-box">
+            <div class="l-footer__social-group">
+                <h2 class="l-footer__social-heading">東京造形大学 <i class="c-icon-external-link"><img src="images/icon-external-link.svg" alt="外部リンク"></i></h2>
+                <ul class="l-footer__social-list">
+                    <li class="l-footer__social-item"><a href="#"><img src="images/zokei-logo.svg" alt="東京造形大学"></a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-box">
+            <div class="l-footer__nav-group">
+                <ul class="l-footer__nav-list">
+                    <li class="l-footer__nav-item"><h2 class="l-footer__nav-heading">研究室情報</h2></li>
+                    <li>沼田真一研究室とは？</li>
+                    <li>沼田真一 Profile</li>
+                    <li>一問一答ノート</li>
+                    <li>研究室アルバム</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-box">
+            <div class="l-footer__nav-group">
+                <ul class="l-footer__nav-list">
+                    <li class="l-footer__nav-item"><h2 class="l-footer__nav-heading">活動情報</h2></li>
+                    <li>ゼミでの活動について</li>
+                    <li>活動記録</li>
+                    <li>ブックトラック</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-box">
+            <div class="l-footer__nav-group">
+                <ul class="l-footer__nav-list">
+                    <li class="l-footer__nav-item"><h2 class="l-footer__nav-heading">メンバー情報</h2></li>
+                    <li>研究室生の部屋</li>
+                    <li>インタビューファイル</li>
+                    <li>ゼミ生のおすすめ</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-box">
+            <div class="l-footer__nav-group">
+                <ul class="l-footer__nav-list">
+                    <li class="l-footer__nav-item"><h2 class="l-footer__nav-heading">コンテンツ</h2></li>
+                    <li>沼田研短歌集</li>
+                    <li>研究室名言録</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-box">
+            <div class="l-footer__nav-group">
+                <ul class="l-footer__nav-list">
+                    <li class="l-footer__nav-item"><h2 class="l-footer__nav-heading">その他</h2></li>
+                    <li>お知らせ</li>
+                    <li>お問い合わせ</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-box two-box">
+            <div class="l-footer__visual">
+                <picture><img src="images/img-book_shelf.webp" alt=""></picture>
+                <picture><img src="images/img-display_shelf.webp" alt=""></picture>
+            </div>
+        </div>
+        <div class="footer-box">
+            <a href="#" class="p-page-top">
+                <span class="p-page-top__label">PAGE TOP</span>
+                <img src="images/baku-normal-line-reflect.svg" alt="" class="p-page-top__image">
+            </a>
+        </div>
+        <div class="footer-box two-box">
+            <div class="l-footer__visual">
+                <picture><img src="images/img-living.webp" alt=""></picture>
+            </div>
+        </div>
+        <div class="footer-box two-box">
+            <div class="p-footer__copyright">
+                <small>©<span id="js-current-year"></span> Shinichi Numata Laboratory All rights reserved.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="main.js"></script>
+</body>
+</html>
