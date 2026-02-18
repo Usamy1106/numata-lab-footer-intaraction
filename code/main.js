@@ -157,9 +157,8 @@ function onPointerDown(e) {
   const ghost = box.cloneNode(true);
   ghost.classList.add('dragging-ghost');
 
-  // two-box のゴーストは2マス幅
-  const slotWidth  = rect.width;
-  const ghostWidth = isTwoBox(box) ? slotWidth * 2 + 10 : slotWidth;
+  // two-box のゴーストは1スロット分の幅（実寸の半分）
+  const ghostWidth = rect.width;
 
   ghost.style.cssText = `
     position: fixed;
@@ -174,10 +173,16 @@ function onPointerDown(e) {
     top: ${e.clientY - offsetY}px;
     margin: 0;
     touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
   `;
   document.body.appendChild(ghost);
 
   box.style.opacity = '0.25';
+
+  // ドラッグ中はテキスト・画像の選択を無効化
+  document.body.style.userSelect = 'none';
+  document.body.style.webkitUserSelect = 'none';
 
   drag = {
     element:    box,
@@ -234,8 +239,12 @@ function onPointerUp(e) {
       if (sourceSlot) {
         // workspace → workspace: スワップ
         if (occupant) {
-          if (isTwoBox(occupant)) clearTwoBoxSlot(targetSlot);
-          sourceSlot.appendChild(occupant);
+          if (isTwoBox(occupant)) {
+            clearTwoBoxSlot(targetSlot);
+            placeTwoBox(sourceSlot, occupant); // two-box は span2 を付け直して戻す
+          } else {
+            sourceSlot.appendChild(occupant);
+          }
         }
       } else {
         // dock → workspace: 右にずらす
@@ -249,8 +258,12 @@ function onPointerUp(e) {
       if (sourceSlot) {
         // workspace → workspace: スワップ
         if (occupant) {
-          if (isTwoBox(occupant)) clearTwoBoxSlot(targetSlot);
-          sourceSlot.appendChild(occupant);
+          if (isTwoBox(occupant)) {
+            clearTwoBoxSlot(targetSlot);
+            placeTwoBox(sourceSlot, occupant); // two-box は span2 を付け直して戻す
+          } else {
+            sourceSlot.appendChild(occupant);
+          }
         }
       } else {
         // dock → workspace: 右にずらす
@@ -293,6 +306,10 @@ function cleanup() {
   drag.ghost.removeEventListener('pointercancel', onPointerCancel);
   drag.ghost.remove();
   drag.element.style.opacity = '';
+
+  // テキスト・画像の選択を再び有効化
+  document.body.style.userSelect = '';
+  document.body.style.webkitUserSelect = '';
 
   document.querySelectorAll('.slot.highlight')
     .forEach(s => s.classList.remove('highlight'));

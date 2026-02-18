@@ -70,242 +70,106 @@ small {
     /* 1行を読みやすい長さに */
 }
 
-
-/* ==========================================================================
-   Layout: Header (Desktop & Global)
-   ========================================================================== */
-
-.l-header {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    margin: 0 0 0 auto;
-    text-align: right;
-    font-size: var(--font-size-Text-R);
-    font-weight: 600;
-    color: var(--color-Primary);
-    letter-spacing: .15em;
-    line-height: 2.2;
-    z-index: 9999;
-}
-
-/* --- PC用ナビゲーション基本スタイル --- */
-.p-g-nav__logo {
-    width: 8em;
-    margin-bottom: 0.5em;
-}
-
-.p-g-nav__item {
-    transition: all .4s ease-in-out;
-}
-
-#l-header__list .l-header-item:nth-of-type(odd).current {
-    color: var(--color-NUMATA-Green);
-}
-
-#l-header__list .l-header-item:nth-of-type(even).current {
-    color: var(--color-NUMATA-Orange);
-}
-
-.p-g-nav__item:hover {
-    transform: translateX(-0.8em);
-}
-
-/* PCではハンバーガーと丸背景を隠す */
-.p-hamburger,
-.p-g-nav__circle,
-.p-g-nav__image {
-    display: none;
-}
-
-/* ==========================================================================
-   Mobile Menu
-   ========================================================================== */
-
-@media screen and (max-width: 767px) {
-    .l-header {
-        width: 100%;
-        top: 0;
-        right: 0;
-    }
-
-    /* --- 丸の拡大背景 --- */
-    .p-g-nav__circle {
-        display: block;
-        /* SPで有効化 */
-        position: fixed;
-        z-index: 9997;
-        /* ナビより下、コンテンツより上 */
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: var(--color-NUMATA-LightBlue);
-        /* デザインに合わせて変更してください */
-        transform: scale(0);
-        top: -100px;
-        left: calc(50% - 50px);
-        transition: all .6s ease;
-        pointer-events: none;
-    }
-
-    /* JSで付与される拡大クラス */
-    .p-g-nav__circle.is-circle-active {
-        transform: scale(50);
-        pointer-events: auto;
-    }
-
-    /* --- ナビゲーション本体 --- */
-    .p-g-nav {
-        display: none;
-        /* 初期は非表示 */
-        position: fixed;
-        z-index: 9998;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100vh;
-        overflow: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* JSで付与される表示クラス */
-    .p-g-nav.is-panel-active {
-        display: block;
-        padding: 20% 15%;
-    }
-
-    .p-g-nav__logo {
-        display: none;
-    }
-
-    /* リストの配置（中央揃え） */
-    .p-g-nav__list {
-        display: flex;
-        flex-direction: column;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-
-    .p-g-nav.is-panel-active .p-g-nav__list {
-        opacity: 1;
-    }
-
-    /* リストアイテムのアニメーション */
-    .p-g-nav.is-panel-active .p-g-nav__item {
-        animation: gnaviAnime 1s forwards;
-        animation-delay: .2s;
-        opacity: 0;
-        transform: translateY(4px);
-    }
-
-    .p-g-nav__image {
-        display: block;
-        width: 50%;
-        margin: 4em auto 0;
-        animation: gnaviAnime 1s forwards;
-    }
-
-    @keyframes gnaviAnime {
-        0% {
-            opacity: 0;
-            transform: translateY(4px);
+/* --- レイアウトの基本 --- */
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--color-bg-main);
+            font-family: sans-serif;
+            height: 100vh; display: flex; flex-direction: column;
+            overflow: hidden; touch-action: none;
         }
 
-        100% {
-            opacity: 1;
-            transform: translateY(0);
+        /* --- 配置エリア (常に5列) --- */
+        #workspace {
+            flex: 1; padding: 10px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-auto-rows: 120px; /* 高さを固定して安定させる */
+            gap: 10px;
+            overflow-y: auto;
+            align-content: start;
         }
-    }
 
-    .p-g-nav__item {
-        font-size: var(--font-size-Text-L);
-        text-align: left;
-        list-style: none;
-    }
+        .slot {
+            border: 1px dashed #ccd0d5;
+            background-color: #f9fafb;
+            position: relative;
+        }
+        .slot.highlight {
+            background-color: #e7f3ff;
+            border-color: #1877f2;
+            border-style: solid;
+        }
 
-    .p-g-nav__item a {
-        text-decoration: none;
-        padding: 15px;
-        display: block;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-weight: bold;
-    }
+        /* --- 下部：ドック (3列) --- */
+        #dock-container {
+            height: 38vh;
+            background-color: #1c1e21;
+            padding: 15px;
+            overflow-y: auto;
+            z-index: 10;
+        }
 
-    /* --- ハンバーガーボタン --- */
-    .p-hamburger {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: fixed;
-        z-index: 9999;
-        top: 1.5svh;
-        right: 2.5svw;
-        width: 3em;
-        height: 3em;
-        border-radius: 50%;
-        border: 1px solid var(--color-Primary);
-        background: none;
-        cursor: pointer;
-        transition: all .4s;
-    }
+        #dock {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
 
-    .p-hamburger:hover {
-        transform: scale(1.1);
-    }
+        /* --- footer-box 調整 --- */
+        .footer-box {
+            background: var(--color-bg-main);
+            padding: 12px;
+            cursor: grab;
+            box-sizing: border-box;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /* ロゴが見えない問題を解消 */
+            display: block !important; 
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
 
-    .p-hamburger span {
-        display: inline-block;
-        position: absolute;
-        width: 60%;
-        height: 1px;
-        background: var(--color-Primary);
-        transition: all .4s;
-    }
+        /* --- footer-box 調整 --- */
+        .footer-box.links {
+            padding-left: 30px;
+        }
 
-    /* 3本線の位置 */
-    .p-hamburger span:nth-of-type(1) {
-        top: 30%;
-    }
+        /* 5列グリッド内では要素をフィットさせる */
+        .slot .footer-box {
+            position: absolute;
+            top: 0; left: 0;
+        }
 
-    .p-hamburger span:nth-of-type(2) {
-        top: 50%;
-    }
+        /* ドラッグ中のクローン */
+        .footer-box.dragging-ghost {
+            position: fixed; z-index: 9999;
+            pointer-events: none; opacity: 0.8;
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        }
 
-    .p-hamburger span:nth-of-type(3) {
-        top: 70%;
-    }
+        /* 内部の最小限のスタイル */
+        img { max-width: 100%; height: auto; pointer-events: none; display: block; }
+        .u-sp-only, .u-pc-tab { display: block !important; } /* カスタマイズ中は両方表示 */
+        h2 { font-size: 12px; margin: 0 0 5px; }
+        ul { list-style: none; padding: 0; margin: 0; font-size: 10px; }
+        a { text-decoration: none; color: inherit; pointer-events: none; }
 
-    /* ×印への変化 */
-    .p-hamburger.is-active span:nth-of-type(1) {
-        top: 50%;
-        transform: rotate(-45deg);
-    }
+        /* ============================================================
+        two-box 対応 — style.css に追記してください
+       ============================================================ */
 
-    .p-hamburger.is-active span:nth-of-type(2) {
-        opacity: 0;
-    }
+        /* 横2マス分に広がるスロット */
+        .slot.slot--span2 {
+          grid-column: span 2;
+        }
 
-    .p-hamburger.is-active span:nth-of-type(3) {
-        top: 50%;
-        transform: rotate(45deg);
-    }
-}
-
-/* ==========================================================================
-   Layout
-   ========================================================================== */
-.l-inner {
-    width: 76svw;
-    margin: var(--section-margin) auto;
-}
-
-@media screen and (max-width: 767px) {
-    .l-inner {
-        width: 100%;
-        padding: 0 25px;
-    }
-}
+        /* dock 内の two-box は2列分 */
+        #dock .footer-box.two-box {
+          grid-column: span 2;
+        }
 
 
 /* ==========================================================================
@@ -444,8 +308,6 @@ small {
 .p-page-top {
     display: block;
     position: relative;
-    width: 14%;
-    margin-bottom: 12svh;
 }
 
 .p-page-top__chevron {
@@ -523,11 +385,13 @@ small {
 }
 
 .l-footer__visual {
-    width: 68%;
+    width: 70%;
+    margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
 }
+
 
 .l-footer__visual .p-image__book-shelf {
     width: 56%;
@@ -546,12 +410,12 @@ small {
 
 .p-footer__copyright small {
     font-family: var(--En-font);
-    font-size: var(--font-size-Text-R);
+    font-size: var(--font-size-Text-S);
     font-weight: 500;
     letter-spacing: 0.1em;
     line-height: 1;
     color: var(--color-Primary);
-    text-align: right;
+    text-align: center;
 }
 
 /* =========================================
@@ -585,9 +449,7 @@ small {
     }
 
     .l-footer__nav-group {
-        width: 100%;
-        border-bottom: 1px solid var(--color-border);
-    }
+        width: 100%;    }
 
     /* ----------------------------------
            アコーディオンの重要設定
@@ -644,7 +506,6 @@ small {
                footer bottom
                ---------------------------------- */
     .p-page-top {
-        width: 20%;
         aspect-ratio: 1/1;
     }
 }
