@@ -403,7 +403,7 @@ small {
 .p-footer__copyright {
     display: flex;
     width: 100%;
-    justify-content: flex-end;
+    justify-content: center;
     margin-bottom: 10svh;
 }
 
@@ -419,7 +419,7 @@ small {
 
 .p-tittle{
 width: 80%;
-margin: 8svh auto 12svh;
+margin: 4svh auto 8svh;
 }
 
 .p-tittle-container{
