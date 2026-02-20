@@ -1,7 +1,7 @@
 (function () {
     let timeoutId;
     const TIMEOUT_DURATION = 3 * 60 * 1000; // 3分
-    const REDIRECT_URL = 'start.html'; // 遷移先に合わせる
+    const REDIRECT_URL = 'index.html'; // 遷移先に合わせる
 
     function resetTimer() {
         if (timeoutId) clearTimeout(timeoutId);
