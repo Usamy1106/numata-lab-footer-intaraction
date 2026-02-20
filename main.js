@@ -1,5 +1,5 @@
 // ============================================================
-//  main.js — 沼田研究室 フッターカスタマイザー (2マス完全同期版)
+//  main.js — 沼田研究室 フッターカスタマイザー (上下左右はみ出し完全防止版)
 // ============================================================
 
 (function() {
@@ -9,7 +9,6 @@
     const COLS = 5;
     let drag = null;
 
-    /** ワークスペースの1マス幅と隙間を最新の状態で取得 */
     function getWorkspaceMetrics() {
         const slots = Array.from(document.querySelectorAll('#workspace .slot'));
         if (slots.length < 2) return { width: 150, gap: 10 };
@@ -29,16 +28,29 @@
         return Array.from(document.querySelectorAll('#workspace .slot'));
     }
 
-    function colOf(slots, idx) {
-        return idx % COLS;
-    }
+    function colOf(idx) { return idx % COLS; }
+    function rowOf(idx) { return Math.floor(idx / COLS); }
 
-    /** 2マス要素が右端(5列目)で1マス分はみ出さないよう調整 */
+    /** * 2マス要素の配置範囲を行（Row）の中に閉じ込める
+     */
     function resolveTwoBoxIndex(slots, idx) {
-        const col = colOf(slots, idx);
-        // 右端（4番目のインデックスなど）なら1つ左のスロットを起点にする
-        if (col === COLS - 1) return Math.max(0, idx - 1);
-        return idx;
+        const col = colOf(idx);
+        const row = rowOf(idx);
+        
+        let targetIdx = idx;
+
+        // 右端（5列目）なら1つ左へ
+        if (col === COLS - 1) {
+            targetIdx = idx - 1;
+        }
+
+        // 【修正】左端の境界チェック：計算した結果が「上の行」にはみ出さないようにガード
+        if (rowOf(targetIdx) !== row) {
+            targetIdx = row * COLS; 
+        }
+        
+        // 最終的なインデックスが配列外にならないよう丸める
+        return Math.max(0, Math.min(targetIdx, slots.length - 2));
     }
 
     /* ---------- ドラッグ開始 ---------- */
@@ -53,21 +65,17 @@
         const slot = box.closest('.slot');
         const rect = box.getBoundingClientRect();
 
-        // 【修正】ドックにある時でも、ワークスペース基準の2マス幅を計算
         let targetWidth = metrics.width;
         if (isTwoBox(box)) {
             targetWidth = (metrics.width * 2) + metrics.gap;
         }
 
-        // 指のタッチ位置を正確に維持
         const offsetX = e.clientX - rect.left;
         const offsetY = e.clientY - rect.top;
 
-        // ゴースト（クローン）の生成
         const ghost = box.cloneNode(true);
         ghost.classList.add('dragging-ghost');
         
-        // 2マス分のスタイルを強制固定
         ghost.style.cssText = `
             position: fixed;
             z-index: 10000;
@@ -84,7 +92,6 @@
         `;
         document.body.appendChild(ghost);
 
-        // 元の要素を透明化。スロットにある場合はその幅(span2)を維持してレイアウト崩れを防ぐ
         box.style.opacity = '0';
 
         drag = {
@@ -102,18 +109,15 @@
         ghost.addEventListener('pointercancel', cleanup);
     }
 
-    /* ---------- ドラッグ中（2マス分の青枠を表示） ---------- */
+    /* ---------- ドラッグ中（行内制限ハイライト） ---------- */
     function onPointerMove(e) {
         if (!drag) return;
 
-        // 指の動きに吸い付く
         drag.ghost.style.left = (e.clientX - drag.offsetX) + 'px';
         drag.ghost.style.top = (e.clientY - drag.offsetY) + 'px';
 
-        // ハイライト（青枠）のリセット
         document.querySelectorAll('.slot.highlight').forEach(s => s.classList.remove('highlight'));
 
-        // 指の下のスロットを探す
         drag.ghost.style.visibility = 'hidden';
         const el = document.elementFromPoint(e.clientX, e.clientY);
         const target = el?.closest('.slot');
@@ -124,19 +128,17 @@
             let idx = slots.indexOf(target);
 
             if (drag.isTwo) {
-                // 【修正】追加時も入れ替え時も、2マス分のスロットを青枠で囲む
+                // 同じ行内だけでスライドするようにインデックスを解決
                 idx = resolveTwoBoxIndex(slots, idx);
                 slots[idx].classList.add('highlight');
-                if (slots[idx + 1]) {
-                    slots[idx + 1].classList.add('highlight');
-                }
+                if (slots[idx + 1]) slots[idx + 1].classList.add('highlight');
             } else {
                 target.classList.add('highlight');
             }
         }
     }
 
-    /* ---------- ドロップ処理 ---------- */
+    /* ---------- ドロップ ---------- */
     function onPointerUp(e) {
         if (!drag) return;
 
@@ -148,7 +150,6 @@
         const isDock = el?.closest('#dock-container');
         drag.ghost.style.visibility = 'visible';
 
-        // 配置開始前に元のスロット予約を一度解除
         if (sourceSlot) sourceSlot.classList.remove('slot--span2');
 
         if (target) {
@@ -156,12 +157,10 @@
             let idx = slots.indexOf(target);
 
             if (isTwo) {
-                // 2マスのドロップ位置を確定
                 idx = resolveTwoBoxIndex(slots, idx);
                 const targetSlot = slots[idx];
                 const occupant = targetSlot.querySelector('.footer-box');
 
-                // 入れ替え処理
                 if (sourceSlot && occupant) {
                     if (isTwoBox(occupant)) {
                         targetSlot.classList.remove('slot--span2');
@@ -171,11 +170,9 @@
                         sourceSlot.appendChild(occupant);
                     }
                 }
-                // 配置
                 targetSlot.classList.add('slot--span2');
                 targetSlot.appendChild(element);
             } else {
-                // 1マスのドロップ
                 const occupant = target.querySelector('.footer-box');
                 if (sourceSlot && occupant) {
                     if (isTwoBox(occupant)) {
@@ -191,7 +188,6 @@
         } else if (isDock) {
             document.getElementById('dock').appendChild(element);
         } else if (sourceSlot) {
-            // 元の場所に戻す
             if (isTwo) sourceSlot.classList.add('slot--span2');
             sourceSlot.appendChild(element);
         }
@@ -207,7 +203,6 @@
         drag = null;
     }
 
-    /* ---------- 初期バインドと監視 ---------- */
     function bindDrag(box) {
         if (box.dataset.dragBound) return;
         box.dataset.dragBound = '1';
