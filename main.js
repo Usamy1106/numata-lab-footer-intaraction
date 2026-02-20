@@ -1,5 +1,5 @@
 // ============================================================
-//  main.js — 沼田研究室 フッターカスタマイザー (上下左右はみ出し完全防止版)
+//  main.js — 沼田研究室 フッターカスタマイザー (選択線防止版)
 // ============================================================
 
 (function() {
@@ -9,6 +9,7 @@
     const COLS = 5;
     let drag = null;
 
+    /** ワークスペースのメトリクス取得 */
     function getWorkspaceMetrics() {
         const slots = Array.from(document.querySelectorAll('#workspace .slot'));
         if (slots.length < 2) return { width: 150, gap: 10 };
@@ -31,25 +32,12 @@
     function colOf(idx) { return idx % COLS; }
     function rowOf(idx) { return Math.floor(idx / COLS); }
 
-    /** * 2マス要素の配置範囲を行（Row）の中に閉じ込める
-     */
     function resolveTwoBoxIndex(slots, idx) {
         const col = colOf(idx);
         const row = rowOf(idx);
-        
         let targetIdx = idx;
-
-        // 右端（5列目）なら1つ左へ
-        if (col === COLS - 1) {
-            targetIdx = idx - 1;
-        }
-
-        // 【修正】左端の境界チェック：計算した結果が「上の行」にはみ出さないようにガード
-        if (rowOf(targetIdx) !== row) {
-            targetIdx = row * COLS; 
-        }
-        
-        // 最終的なインデックスが配列外にならないよう丸める
+        if (col === COLS - 1) targetIdx = idx - 1;
+        if (rowOf(targetIdx) !== row) targetIdx = row * COLS; 
         return Math.max(0, Math.min(targetIdx, slots.length - 2));
     }
 
@@ -60,6 +48,11 @@
 
         e.preventDefault();
         e.stopPropagation();
+
+        // 【修正】OSの青い選択線（ハイライト）を完全に無効化
+        document.body.style.userSelect = 'none';
+        document.body.style.webkitUserSelect = 'none'; // iOS/Safari用
+        document.body.style.msUserSelect = 'none';
 
         const metrics = getWorkspaceMetrics();
         const slot = box.closest('.slot');
@@ -89,6 +82,8 @@
             top: ${e.clientY - offsetY}px;
             margin: 0;
             box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
         `;
         document.body.appendChild(ghost);
 
@@ -109,10 +104,9 @@
         ghost.addEventListener('pointercancel', cleanup);
     }
 
-    /* ---------- ドラッグ中（行内制限ハイライト） ---------- */
+    /* ---------- ドラッグ中 ---------- */
     function onPointerMove(e) {
         if (!drag) return;
-
         drag.ghost.style.left = (e.clientX - drag.offsetX) + 'px';
         drag.ghost.style.top = (e.clientY - drag.offsetY) + 'px';
 
@@ -126,9 +120,7 @@
         if (target) {
             const slots = getAllSlots();
             let idx = slots.indexOf(target);
-
             if (drag.isTwo) {
-                // 同じ行内だけでスライドするようにインデックスを解決
                 idx = resolveTwoBoxIndex(slots, idx);
                 slots[idx].classList.add('highlight');
                 if (slots[idx + 1]) slots[idx + 1].classList.add('highlight');
@@ -141,7 +133,6 @@
     /* ---------- ドロップ ---------- */
     function onPointerUp(e) {
         if (!drag) return;
-
         const { element, sourceSlot, isTwo } = drag;
         
         drag.ghost.style.visibility = 'hidden';
@@ -155,12 +146,10 @@
         if (target) {
             const slots = getAllSlots();
             let idx = slots.indexOf(target);
-
             if (isTwo) {
                 idx = resolveTwoBoxIndex(slots, idx);
                 const targetSlot = slots[idx];
                 const occupant = targetSlot.querySelector('.footer-box');
-
                 if (sourceSlot && occupant) {
                     if (isTwoBox(occupant)) {
                         targetSlot.classList.remove('slot--span2');
@@ -191,7 +180,6 @@
             if (isTwo) sourceSlot.classList.add('slot--span2');
             sourceSlot.appendChild(element);
         }
-
         cleanup();
     }
 
@@ -200,6 +188,12 @@
         drag.ghost.remove();
         drag.element.style.opacity = '1';
         document.querySelectorAll('.slot.highlight').forEach(s => s.classList.remove('highlight'));
+        
+        // 【修正】ドラッグが終わったら選択禁止を解除
+        document.body.style.userSelect = '';
+        document.body.style.webkitUserSelect = '';
+        document.body.style.msUserSelect = '';
+        
         drag = null;
     }
 
