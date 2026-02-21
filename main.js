@@ -1,5 +1,5 @@
 // ============================================================
-//  main.js — 沼田研究室 フッターカスタマイザー (選択線防止版)
+//  main.js — 沼田研究室 フッターカスタマイザー (ドック内並べ替え禁止版)
 // ============================================================
 
 (function() {
@@ -29,30 +29,38 @@
         return Array.from(document.querySelectorAll('#workspace .slot'));
     }
 
-    function colOf(idx) { return idx % COLS; }
-    function rowOf(idx) { return Math.floor(idx / COLS); }
+    function colOf(slots, idx) {
+        return idx % COLS;
+    }
 
     function resolveTwoBoxIndex(slots, idx) {
-        const col = colOf(idx);
-        const row = rowOf(idx);
-        let targetIdx = idx;
-        if (col === COLS - 1) targetIdx = idx - 1;
-        if (rowOf(targetIdx) !== row) targetIdx = row * COLS; 
-        return Math.max(0, Math.min(targetIdx, slots.length - 2));
+        const col = colOf(slots, idx);
+        if (col === COLS - 1) return Math.max(0, idx - 1);
+        return idx;
+    }
+
+    function cleanup() {
+        if (drag) {
+            if (drag.ghost) drag.ghost.remove();
+            if (drag.element) drag.element.style.opacity = '1';
+        }
+        document.querySelectorAll('.slot.highlight').forEach(s => s.classList.remove('highlight'));
+        document.querySelectorAll('.dragging-ghost').forEach(el => el.remove());
+        drag = null;
     }
 
     /* ---------- ドラッグ開始 ---------- */
     function onPointerDown(e) {
+        if (drag) {
+            cleanup();
+            return;
+        }
+
         const box = e.target.closest('.footer-box');
         if (!box || box.classList.contains('dragging-ghost')) return;
 
         e.preventDefault();
         e.stopPropagation();
-
-        // 【修正】OSの青い選択線（ハイライト）を完全に無効化
-        document.body.style.userSelect = 'none';
-        document.body.style.webkitUserSelect = 'none'; // iOS/Safari用
-        document.body.style.msUserSelect = 'none';
 
         const metrics = getWorkspaceMetrics();
         const slot = box.closest('.slot');
@@ -82,8 +90,6 @@
             top: ${e.clientY - offsetY}px;
             margin: 0;
             box-sizing: border-box;
-            user-select: none;
-            -webkit-user-select: none;
         `;
         document.body.appendChild(ghost);
 
@@ -91,7 +97,7 @@
 
         drag = {
             element: box,
-            sourceSlot: slot ?? null,
+            sourceSlot: slot ?? null, // スロットになければドック出身
             ghost,
             offsetX,
             offsetY,
@@ -107,6 +113,7 @@
     /* ---------- ドラッグ中 ---------- */
     function onPointerMove(e) {
         if (!drag) return;
+
         drag.ghost.style.left = (e.clientX - drag.offsetX) + 'px';
         drag.ghost.style.top = (e.clientY - drag.offsetY) + 'px';
 
@@ -133,22 +140,40 @@
     /* ---------- ドロップ ---------- */
     function onPointerUp(e) {
         if (!drag) return;
+
         const { element, sourceSlot, isTwo } = drag;
         
         drag.ghost.style.visibility = 'hidden';
         const el = document.elementFromPoint(e.clientX, e.clientY);
-        const target = el?.closest('.slot');
+        const targetSlot = el?.closest('.slot');
         const isDock = el?.closest('#dock-container');
         drag.ghost.style.visibility = 'visible';
 
-        if (sourceSlot) sourceSlot.classList.remove('slot--span2');
+        if (targetSlot) {
+            // --- ワークスペースへの配置/入れ替え ---
+            if (sourceSlot) sourceSlot.classList.remove('slot--span2');
 
-        if (target) {
             const slots = getAllSlots();
-            let idx = slots.indexOf(target);
+            let idx = slots.indexOf(targetSlot);
+
             if (isTwo) {
                 idx = resolveTwoBoxIndex(slots, idx);
-                const targetSlot = slots[idx];
+                const actualTarget = slots[idx];
+                const occupant = actualTarget.querySelector('.footer-box');
+
+                if (sourceSlot && occupant) {
+                    // 上同士の入れ替え
+                    if (isTwoBox(occupant)) {
+                        actualTarget.classList.remove('slot--span2');
+                        sourceSlot.classList.add('slot--span2');
+                        sourceSlot.appendChild(occupant);
+                    } else {
+                        sourceSlot.appendChild(occupant);
+                    }
+                }
+                actualTarget.classList.add('slot--span2');
+                actualTarget.appendChild(element);
+            } else {
                 const occupant = targetSlot.querySelector('.footer-box');
                 if (sourceSlot && occupant) {
                     if (isTwoBox(occupant)) {
@@ -159,44 +184,30 @@
                         sourceSlot.appendChild(occupant);
                     }
                 }
-                targetSlot.classList.add('slot--span2');
                 targetSlot.appendChild(element);
-            } else {
-                const occupant = target.querySelector('.footer-box');
-                if (sourceSlot && occupant) {
-                    if (isTwoBox(occupant)) {
-                        target.classList.remove('slot--span2');
-                        sourceSlot.classList.add('slot--span2');
-                        sourceSlot.appendChild(occupant);
-                    } else {
-                        sourceSlot.appendChild(occupant);
-                    }
-                }
-                target.appendChild(element);
             }
         } else if (isDock) {
-            document.getElementById('dock').appendChild(element);
+            // --- 下（ドック）への移動 ---
+            if (sourceSlot) {
+                // 上から下へ移動する場合のみ処理を実行
+                sourceSlot.classList.remove('slot--span2');
+                document.getElementById('dock').appendChild(element);
+            }
+            // ドック内で掴んでドックで離した場合は、何もしない（並べ替え禁止）
         } else if (sourceSlot) {
+            // キャンセル：元のスロットに戻す
             if (isTwo) sourceSlot.classList.add('slot--span2');
-            sourceSlot.appendChild(element);
         }
+
         cleanup();
     }
 
-    function cleanup() {
-        if (!drag) return;
-        drag.ghost.remove();
-        drag.element.style.opacity = '1';
-        document.querySelectorAll('.slot.highlight').forEach(s => s.classList.remove('highlight'));
-        
-        // 【修正】ドラッグが終わったら選択禁止を解除
-        document.body.style.userSelect = '';
-        document.body.style.webkitUserSelect = '';
-        document.body.style.msUserSelect = '';
-        
-        drag = null;
-    }
+    /* ---------- グローバルキャンセル ---------- */
+    document.addEventListener('pointerdown', (e) => {
+        if (drag && !e.target.closest('.footer-box')) cleanup();
+    }, { capture: true });
 
+    /* ---------- バインド ---------- */
     function bindDrag(box) {
         if (box.dataset.dragBound) return;
         box.dataset.dragBound = '1';
