@@ -70,106 +70,131 @@ small {
     /* 1行を読みやすい長さに */
 }
 
+/* 並べ替えパーツの操作を邪魔させない設定 */
+.footer-box, .footer-box img {
+    /* テキスト選択を無効化 */
+    -webkit-user-select: none;  /* iOS Safari, Chrome */
+    -moz-user-select: none;     /* Firefox */
+    -ms-user-select: none;      /* IE11/Edge */
+    user-select: none;          /* 標準 */
+
+    /* iOS Safariでの長押しメニュー（保存・コピー）を禁止 */
+    -webkit-touch-callout: none;
+
+    /* ブラウザ独自の画像ドラッグ機能を無効化 */
+    -webkit-user-drag: none;
+    -khtml-user-drag: none;
+
+    /* タップ時の青いハイライトを消す（モバイル用） */
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* 画像そのものがマウスイベントを奪わないようにする（さらに確実にする場合） */
+.footer-box img {
+    pointer-events: none;
+}
+
 /* --- レイアウトの基本 --- */
-        body {
-            margin: 0; padding: 0;
-            background-color: var(--color-bg-main);
-            font-family: sans-serif;
-            height: 100vh; display: flex; flex-direction: column;
-            overflow: hidden; touch-action: none;
-        }
+body {
+    margin: 0; padding: 0;
+    ackground-color: var(--color-bg-main);
+    font-family: sans-serif;
+    height: 100vh; display: flex; flex-direction: column;
+    overflow: hidden; touch-action: none;
+}
 
-        /* --- 配置エリア (常に5列) --- */
-        #workspace {
-            flex: 1; padding: 10px;
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-auto-rows: 150px; /* 高さを固定して安定させる */
-            gap: 10px;
-            overflow-y: auto;
-            align-content: start;
-        }
+/* --- 配置エリア (常に5列) --- */
+#workspace {
+    flex: 1; padding: 10px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 150px; /* 高さを固定して安定させる */
+    gap: 10px;
+    overflow-y: auto;
+    align-content: start;
+}
 
-        .slot {
-            border: 1px dashed #ccd0d5;
-            background-color: var(--color-White);
-            position: relative;
-        }
-        .slot.highlight {
-            background-color: #e7f3ff;
-            border-color: #1877f2;
-            border-style: solid;
-        }
+.slot {
+    border: 1px dashed #ccd0d5;
+    background-color: var(--color-White);
+    position: relative;
+}
 
-        /* --- 下部：ドック (3列) --- */
-        #dock-container {
-            height: 38vh;
-            background-color: #19244cd0;
-            padding: 15px;
-            overflow-y: auto;
-            z-index: 10;
-        }
+.slot.highlight {
+    background-color: #e7f3ff;
+    border-color: #1877f2;
+    border-style: solid;
+}
 
-        #dock {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-        }
+/* --- 下部：ドック (3列) --- */
+#dock-container {
+    height: 38vh;
+    background-color: #19244cd0;
+    padding: 15px;
+    overflow-y: auto;
+    z-index: 10;
+}
 
-        /* --- footer-box 調整 --- */
-        .footer-box {
-            background: var(--color-bg-main);
-            padding: 12px;
-            cursor: grab;
-            box-sizing: border-box;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            /* ロゴが見えない問題を解消 */
-            display: block !important; 
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
+#dock {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+}
 
-        /* --- footer-box 調整 --- */
-        .footer-box.links {
-            padding-left: 30px;
-        }
+/* --- footer-box 調整 --- */
+.footer-box {
+    background: var(--color-bg-main);
+        padding: 12px;
+        cursor: grab;
+        box-sizing: border-box;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        /* ロゴが見えない問題を解消 */
+        display: block !important; 
+        visibility: visible !important;
+        opacity: 1 !important;
+}
 
-        /* 5列グリッド内では要素をフィットさせる */
-        .slot .footer-box {
-            position: absolute;
-            top: 0; left: 0;
-        }
+/* --- footer-box 調整 --- */
+.footer-box.links {
+    padding-left: 30px;
+}
 
-        /* ドラッグ中のクローン */
-        .footer-box.dragging-ghost {
-            position: fixed; z-index: 9999;
-            pointer-events: none; opacity: 0.8;
-            transform: scale(1.05);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
-        }
+/* 5列グリッド内では要素をフィットさせる */
+.slot .footer-box {
+    position: absolute;
+    top: 0; left: 0;
+}
 
-        /* 内部の最小限のスタイル */
-        img { max-width: 100%; height: auto; pointer-events: none; display: block; }
-        .u-sp-only, .u-pc-tab { display: block !important; } /* カスタマイズ中は両方表示 */
-        h2 { font-size: 12px; margin: 0 0 5px; }
-        ul { list-style: none; padding: 0; margin: 0; font-size: 10px; }
-        a { text-decoration: none; color: inherit; pointer-events: none; }
+/* ドラッグ中のクローン */
+.footer-box.dragging-ghost {
+    position: fixed; z-index: 9999;
+    pointer-events: none; opacity: 0.8;
+    transform: scale(1.05);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+}
+
+/* 内部の最小限のスタイル */
+img { max-width: 100%; height: auto; pointer-events: none; display: block; }
+.u-sp-only, .u-pc-tab { display: block !important; } /* カスタマイズ中は両方表示 */
+h2 { font-size: 12px; margin: 0 0 5px; }
+ul { list-style: none; padding: 0; margin: 0; font-size: 10px; }
+a { text-decoration: none; color: inherit; pointer-events: none; }
 
         /* ============================================================
         two-box 対応 — style.css に追記してください
        ============================================================ */
 
         /* 横2マス分に広がるスロット */
-        .slot.slot--span2 {
-          grid-column: span 2;
-        }
+.slot.slot--span2 {
+  grid-column: span 2;
+}
 
-        /* dock 内の two-box は2列分 */
-        #dock .footer-box.two-box {
-          grid-column: span 2;
-        }
+/* dock 内の two-box は2列分 */
+#dock .footer-box.two-box {
+    grid-column: span 2;
+}
 
 /* ==========================================================================
    Layout: footer (Desktop)
