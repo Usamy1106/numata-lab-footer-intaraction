@@ -1,5 +1,5 @@
 // ============================================================
-//  main.js — 沼田研究室 フッターカスタマイザー (ドック内並べ替え禁止版)
+//  main.js — 沼田研究室 フッターカスタマイザー (グリッド崩れ完全防止版)
 // ============================================================
 
 (function() {
@@ -9,12 +9,13 @@
     const COLS = 5;
     let drag = null;
 
-    /** ワークスペースのメトリクス取得 */
     function getWorkspaceMetrics() {
         const slots = Array.from(document.querySelectorAll('#workspace .slot'));
-        if (slots.length < 2) return { width: 150, gap: 10 };
-        const rect1 = slots[0].getBoundingClientRect();
-        const rect2 = slots[1].getBoundingClientRect();
+        // 非表示になっていないスロットを基準に計算
+        const visibleSlots = slots.filter(s => s.style.display !== 'none');
+        if (visibleSlots.length < 2) return { width: 150, gap: 10 };
+        const rect1 = visibleSlots[0].getBoundingClientRect();
+        const rect2 = visibleSlots[1].getBoundingClientRect();
         return {
             width: rect1.width,
             gap: rect2.left - rect1.right
@@ -39,6 +40,30 @@
         return idx;
     }
 
+    /** * 全スロットの状態を整理する 
+     * 2マス要素がある場所の隣のスロットを隠し、マスが増えないようにする
+     */
+    function refreshGridLayout() {
+        const slots = getAllSlots();
+        // 一旦全スロットを表示し、スパンを解除
+        slots.forEach(s => {
+            s.style.display = '';
+            s.classList.remove('slot--span2');
+        });
+
+        slots.forEach((slot, idx) => {
+            const box = slot.querySelector('.footer-box');
+            if (box && isTwoBox(box)) {
+                slot.classList.add('slot--span2');
+                const nextSlot = slots[idx + 1];
+                // 隣のスロットが存在し、かつ同じ行であれば隠す
+                if (nextSlot && colOf(slots, idx) < COLS - 1) {
+                    nextSlot.style.display = 'none';
+                }
+            }
+        });
+    }
+
     function cleanup() {
         if (drag) {
             if (drag.ghost) drag.ghost.remove();
@@ -47,6 +72,7 @@
         document.querySelectorAll('.slot.highlight').forEach(s => s.classList.remove('highlight'));
         document.querySelectorAll('.dragging-ghost').forEach(el => el.remove());
         drag = null;
+        refreshGridLayout(); // ドラッグ終了後にレイアウトを再整列
     }
 
     /* ---------- ドラッグ開始 ---------- */
@@ -97,7 +123,7 @@
 
         drag = {
             element: box,
-            sourceSlot: slot ?? null, // スロットになければドック出身
+            sourceSlot: slot ?? null,
             ghost,
             offsetX,
             offsetY,
@@ -121,18 +147,19 @@
 
         drag.ghost.style.visibility = 'hidden';
         const el = document.elementFromPoint(e.clientX, e.clientY);
-        const target = el?.closest('.slot');
+        const targetSlot = el?.closest('.slot');
         drag.ghost.style.visibility = 'visible';
 
-        if (target) {
+        if (targetSlot) {
             const slots = getAllSlots();
-            let idx = slots.indexOf(target);
+            let idx = slots.indexOf(targetSlot);
             if (drag.isTwo) {
                 idx = resolveTwoBoxIndex(slots, idx);
                 slots[idx].classList.add('highlight');
+                // 隣のスロットが非表示でも、ハイライトのために一時的に隣も光らせる
                 if (slots[idx + 1]) slots[idx + 1].classList.add('highlight');
             } else {
-                target.classList.add('highlight');
+                targetSlot.classList.add('highlight');
             }
         }
     }
@@ -150,9 +177,6 @@
         drag.ghost.style.visibility = 'visible';
 
         if (targetSlot) {
-            // --- ワークスペースへの配置/入れ替え ---
-            if (sourceSlot) sourceSlot.classList.remove('slot--span2');
-
             const slots = getAllSlots();
             let idx = slots.indexOf(targetSlot);
 
@@ -162,68 +186,42 @@
                 const occupant = actualTarget.querySelector('.footer-box');
 
                 if (sourceSlot && occupant) {
-                    // 上同士の入れ替え
-                    if (isTwoBox(occupant)) {
-                        actualTarget.classList.remove('slot--span2');
-                        sourceSlot.classList.add('slot--span2');
-                        sourceSlot.appendChild(occupant);
-                    } else {
-                        sourceSlot.appendChild(occupant);
-                    }
+                    sourceSlot.appendChild(occupant);
                 }
-                actualTarget.classList.add('slot--span2');
                 actualTarget.appendChild(element);
             } else {
                 const occupant = targetSlot.querySelector('.footer-box');
                 if (sourceSlot && occupant) {
-                    if (isTwoBox(occupant)) {
-                        targetSlot.classList.remove('slot--span2');
-                        sourceSlot.classList.add('slot--span2');
-                        sourceSlot.appendChild(occupant);
-                    } else {
-                        sourceSlot.appendChild(occupant);
-                    }
+                    sourceSlot.appendChild(occupant);
                 }
                 targetSlot.appendChild(element);
             }
         } else if (isDock) {
-            // --- 下（ドック）への移動 ---
             if (sourceSlot) {
-                // 上から下へ移動する場合のみ処理を実行
-                sourceSlot.classList.remove('slot--span2');
                 document.getElementById('dock').appendChild(element);
             }
-            // ドック内で掴んでドックで離した場合は、何もしない（並べ替え禁止）
-        } else if (sourceSlot) {
-            // キャンセル：元のスロットに戻す
-            if (isTwo) sourceSlot.classList.add('slot--span2');
         }
 
         cleanup();
     }
 
-    /* ---------- グローバルキャンセル ---------- */
-    document.addEventListener('pointerdown', (e) => {
-        if (drag && !e.target.closest('.footer-box')) cleanup();
-    }, { capture: true });
-
-    /* ---------- バインド ---------- */
+    /* ---------- 初期化 ---------- */
     function bindDrag(box) {
         if (box.dataset.dragBound) return;
         box.dataset.dragBound = '1';
+        box.setAttribute('draggable', 'false');
         box.style.touchAction = 'none';
         box.addEventListener('pointerdown', onPointerDown);
     }
 
     document.querySelectorAll('.footer-box').forEach(bindDrag);
 
-    const observer = new MutationObserver(m => {
-        m.forEach(r => r.addedNodes.forEach(node => {
-            if (node.nodeType === 1) {
-                if (node.classList.contains('footer-box')) bindDrag(node);
-                node.querySelectorAll?.('.footer-box').forEach(bindDrag);
-            }
-        }));
+    const observer = new MutationObserver(() => {
+        document.querySelectorAll('.footer-box').forEach(bindDrag);
     });
     observer.observe(document.body, { childList: true, subtree: true });
+
+    // 初期ロード時に一度整列
+    refreshGridLayout();
+
 })();

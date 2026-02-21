@@ -106,10 +106,10 @@ body {
 /* --- 配置エリア (常に5列) --- */
 #workspace {
     flex: 1; 
-    padding: 10;
+    padding: 10px 10%;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: 150px; /* 高さを固定して安定させる */
+    grid-auto-rows: 114.88px; /* 高さを固定して安定させる */
     gap: 10px;
     overflow-y: auto;
     align-content: start;
@@ -130,9 +130,9 @@ body {
 
 /* --- 下部：ドック (3列) --- */
 #dock-container {
-    height: 38vh;
+    height: 42svh;
     background-color: #19244cd0;
-    padding: 15px;
+    padding: 15px 10%;
     overflow-y: auto;
     z-index: 10;
 }
